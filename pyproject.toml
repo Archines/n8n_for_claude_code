@@ -1,0 +1,19 @@
+[build-system]
+requires = ["setuptools>=68.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "n8n-cli"
+version = "0.1.0"
+description = "n8n API client and CLI for Claude Code"
+requires-python = ">=3.9"
+dependencies = [
+    "click>=8.0",
+    "requests>=2.28",
+]
+
+[project.scripts]
+n8n = "n8n_client.cli:cli"
+
+[tool.setuptools.packages.find]
+include = ["n8n_client*"]

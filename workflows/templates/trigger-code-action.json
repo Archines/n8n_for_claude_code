@@ -1,0 +1,75 @@
+{
+  "name": "[手動実行] コード処理→結果出力",
+  "description": "手動実行→Pythonコード処理→結果設定のテンプレート",
+  "_metadata": {
+    "template_name": "trigger-code-action",
+    "description": "手動実行→コード処理→結果出力",
+    "trigger_type": "manual"
+  },
+  "nodes": [
+    {
+      "id": "9c0d1e2f-3a4b-4c5d-6e7f-8a9b0c1d2e3f",
+      "name": "手動実行トリガー",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [250, 300],
+      "parameters": {}
+    },
+    {
+      "id": "0d1e2f3a-4b5c-4d6e-7f8a-9b0c1d2e3f4a",
+      "name": "データ処理コード",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [500, 300],
+      "parameters": {
+        "language": "pythonNative",
+        "pythonCode": "# データ処理ロジックを記述\nresults = []\nfor item in _items:\n    data = item[\"json\"]\n    # 処理を追加\n    results.append({\"json\": {\"result\": data, \"status\": \"processed\"}})\nreturn results"
+      }
+    },
+    {
+      "id": "1e2f3a4b-5c6d-4e7f-8a9b-0c1d2e3f4a5b",
+      "name": "結果データ設定",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [750, 300],
+      "parameters": {
+        "mode": "manual",
+        "duplicateItem": false,
+        "assignments": {
+          "assignments": [
+            {
+              "id": "f1a2b3c4-d5e6-4f7a-8b9c-0d1e2f3a4b5c",
+              "name": "output",
+              "value": "={{ $json.result }}",
+              "type": "string"
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "connections": {
+    "手動実行トリガー": {
+      "main": [
+        [
+          {
+            "node": "データ処理コード",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "データ処理コード": {
+      "main": [
+        [
+          {
+            "node": "結果データ設定",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  }
+}

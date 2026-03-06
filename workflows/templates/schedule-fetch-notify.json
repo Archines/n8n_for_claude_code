@@ -1,0 +1,108 @@
+{
+  "name": "[定期実行] データ取得→通知 - 毎時実行",
+  "description": "定期実行→外部API取得→データ整形→Slack通知のテンプレート",
+  "_metadata": {
+    "template_name": "schedule-fetch-notify",
+    "description": "定期実行→データ取得→通知",
+    "trigger_type": "schedule"
+  },
+  "nodes": [
+    {
+      "id": "5e6f7a8b-9c0d-4e1f-2a3b-4c5d6e7f8a9b",
+      "name": "毎時スケジュール実行",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [250, 300],
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "hours",
+              "hoursInterval": 1
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "6f7a8b9c-0d1e-4f2a-3b4c-5d6e7f8a9b0c",
+      "name": "外部APIデータ取得",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [500, 300],
+      "parameters": {
+        "method": "GET",
+        "url": "https://api.example.com/data"
+      }
+    },
+    {
+      "id": "7a8b9c0d-1e2f-4a3b-4c5d-6e7f8a9b0c1d",
+      "name": "通知データ整形",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [750, 300],
+      "parameters": {
+        "language": "pythonNative",
+        "pythonCode": "# 取得データからSlack通知用メッセージを生成\nresults = []\nfor item in _items:\n    data = item[\"json\"]\n    message = f\"定期レポート: {data}\"\n    results.append({\"json\": {\"message\": message}})\nreturn results"
+      }
+    },
+    {
+      "id": "8b9c0d1e-2f3a-4b4c-5d6e-7f8a9b0c1d2e",
+      "name": "Slack通知送信",
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 2.2,
+      "position": [1000, 300],
+      "credentials": {
+        "slackOAuth2Api": {
+          "id": "__PLACEHOLDER__",
+          "name": "__PLACEHOLDER__"
+        }
+      },
+      "parameters": {
+        "resource": "message",
+        "operation": "send",
+        "channel": {
+          "__rl": true,
+          "value": "#general",
+          "mode": "name"
+        },
+        "text": "={{ $json.message }}"
+      }
+    }
+  ],
+  "connections": {
+    "毎時スケジュール実行": {
+      "main": [
+        [
+          {
+            "node": "外部APIデータ取得",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "外部APIデータ取得": {
+      "main": [
+        [
+          {
+            "node": "通知データ整形",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "通知データ整形": {
+      "main": [
+        [
+          {
+            "node": "Slack通知送信",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  }
+}

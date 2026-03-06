@@ -1,0 +1,41 @@
+{
+  "name": "[テスト] Webhook受信 - Slack通知",
+  "nodes": [
+    {
+      "id": "bad-id-not-uuid",
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [250, 300],
+      "parameters": {
+        "path": "test-hook",
+        "httpMethod": "POST"
+      },
+      "webhookId": "abc-123"
+    },
+    {
+      "id": "e6663e6c-7ecf-4c3d-9106-2a77b3192f50",
+      "name": "Slack通知送信",
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 2.2,
+      "position": [500, 300],
+      "parameters": {
+        "channel": "#general",
+        "text": "={{$json.message}}"
+      },
+      "credentials": {
+        "slackOAuth2Api": {
+          "id": "PLACEHOLDER",
+          "name": "Slack account"
+        }
+      },
+      "retryOnFail": true,
+      "maxTries": 3
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [[{"node": "Slack通知送信", "type": "main", "index": 0}]]
+    }
+  }
+}

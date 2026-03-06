@@ -1,0 +1,12 @@
+# n8n credentials (user-specific, never commit)
+.n8n_config.json
+
+# Version history (local only)
+workflows/.versions/
+
+# Python
+__pycache__/
+*.egg-info/
+
+# OS
+.DS_Store

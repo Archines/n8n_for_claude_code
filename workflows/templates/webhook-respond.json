@@ -1,0 +1,69 @@
+{
+  "name": "[Webhook] リクエスト処理 - レスポンス返却",
+  "description": "Webhook受信→データ加工→レスポンス返却のテンプレート",
+  "_metadata": {
+    "template_name": "webhook-respond",
+    "description": "Webhook受信→処理→レスポンス返却",
+    "trigger_type": "webhook"
+  },
+  "nodes": [
+    {
+      "id": "a1b2c3d4-e5f6-4a7b-8c9d-0e1f2a3b4c5d",
+      "name": "Webhookリクエスト受信",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [250, 300],
+      "webhookId": "d4e5f6a7-b8c9-4d0e-1f2a-3b4c5d6e7f8a",
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "my-webhook",
+        "responseMode": "responseNode"
+      }
+    },
+    {
+      "id": "b2c3d4e5-f6a7-4b8c-9d0e-1f2a3b4c5d6e",
+      "name": "データ加工処理",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [500, 300],
+      "parameters": {
+        "language": "pythonNative",
+        "pythonCode": "# 受信データを加工して返す\nresults = []\nfor item in _items:\n    data = item[\"json\"]\n    results.append({\"json\": {\"processed\": True, \"data\": data}})\nreturn results"
+      }
+    },
+    {
+      "id": "c3d4e5f6-a7b8-4c9d-0e1f-2a3b4c5d6e7f",
+      "name": "レスポンス返却",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [750, 300],
+      "parameters": {
+        "respondWith": "allIncomingItems"
+      }
+    }
+  ],
+  "connections": {
+    "Webhookリクエスト受信": {
+      "main": [
+        [
+          {
+            "node": "データ加工処理",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "データ加工処理": {
+      "main": [
+        [
+          {
+            "node": "レスポンス返却",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  }
+}
