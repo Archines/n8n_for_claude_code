@@ -1,8 +1,49 @@
 """Multi-client configuration management for n8n API credentials."""
 
 import json
-import os
+import subprocess
 from pathlib import Path
+
+KEYCHAIN_SERVICE = "n8n-claude-code"
+
+
+def _keychain_set(account: str, password: str) -> None:
+    """Store a password in macOS Keychain. Updates if already exists."""
+    # Delete existing entry first (ignore errors if not found)
+    subprocess.run(
+        ["security", "delete-generic-password", "-s", KEYCHAIN_SERVICE, "-a", account],
+        capture_output=True,
+    )
+    subprocess.run(
+        [
+            "security", "add-generic-password",
+            "-s", KEYCHAIN_SERVICE,
+            "-a", account,
+            "-w", password,
+        ],
+        capture_output=True,
+        check=True,
+    )
+
+
+def _keychain_get(account: str) -> str | None:
+    """Retrieve a password from macOS Keychain. Returns None if not found."""
+    result = subprocess.run(
+        ["security", "find-generic-password", "-s", KEYCHAIN_SERVICE, "-a", account, "-w"],
+        capture_output=True,
+        text=True,
+    )
+    if result.returncode != 0:
+        return None
+    return result.stdout.strip()
+
+
+def _keychain_delete(account: str) -> None:
+    """Delete a password from macOS Keychain. Ignores errors if not found."""
+    subprocess.run(
+        ["security", "delete-generic-password", "-s", KEYCHAIN_SERVICE, "-a", account],
+        capture_output=True,
+    )
 
 
 class ConfigManager:
@@ -22,6 +63,16 @@ class ConfigManager:
         with open(self.config_path, "w") as f:
             json.dump(config, f, indent=2, ensure_ascii=False)
 
+    def _enrich_with_api_key(self, name: str, info: dict) -> dict:
+        """Add api_key from Keychain to client info dict."""
+        enriched = dict(info)
+        api_key = _keychain_get(name)
+        if not api_key:
+            # Fallback: check if api_key is still in config (migration support)
+            api_key = info.get("api_key", "")
+        enriched["api_key"] = api_key
+        return enriched
+
     def list_clients(self) -> dict[str, dict]:
         return self._load().get("clients", {})
 
@@ -33,13 +84,13 @@ class ConfigManager:
         name = config.get("active_client", "")
         if not name or name not in config.get("clients", {}):
             return None
-        return name, config["clients"][name]
+        return name, self._enrich_with_api_key(name, config["clients"][name])
 
     def add_client(self, name: str, base_url: str, api_key: str, description: str = ""):
+        _keychain_set(name, api_key)
         config = self._load()
         config.setdefault("clients", {})[name] = {
             "base_url": base_url.rstrip("/"),
-            "api_key": api_key,
             "description": description,
         }
         if not config.get("active_client"):
@@ -52,6 +103,7 @@ class ConfigManager:
         if name not in clients:
             raise KeyError(f"Client '{name}' not found")
         del clients[name]
+        _keychain_delete(name)
         if config.get("active_client") == name:
             config["active_client"] = next(iter(clients), "")
         self._save(config)
@@ -69,7 +121,7 @@ class ConfigManager:
         clients = config.get("clients", {})
         if name not in clients:
             raise KeyError(f"Client '{name}' not found")
-        return name, clients[name]
+        return name, self._enrich_with_api_key(name, clients[name])
 
     def has_config(self) -> bool:
         return self.config_path.exists() and bool(self._load().get("clients"))

@@ -1,6 +1,9 @@
 # n8n credentials (user-specific, never commit)
 .n8n_config.json
 
+# Workflow JSON files (client-specific, managed via n8n API)
+workflows/*.json
+
 # Version history (local only)
 workflows/.versions/
 

@@ -86,9 +86,28 @@ def config_add(name, base_url, api_key, description):
 @config.command("remove")
 @click.argument("name")
 def config_remove(name):
-    """Remove a client configuration."""
+    """Remove a client configuration (also removes API key from Keychain)."""
     _cfg.remove_client(name)
     click.echo(f"Client '{name}' removed.")
+
+
+@config.command("migrate-keys")
+def config_migrate_keys():
+    """Migrate plaintext API keys from config file to macOS Keychain."""
+    from n8n_client.config import _keychain_set
+    config = _cfg._load()
+    clients = config.get("clients", {})
+    migrated = 0
+    for name, info in clients.items():
+        if "api_key" in info:
+            _keychain_set(name, info["api_key"])
+            del info["api_key"]
+            migrated += 1
+    if migrated:
+        _cfg._save(config)
+        click.echo(f"Migrated {migrated} API key(s) to macOS Keychain.")
+    else:
+        click.echo("No plaintext API keys found in config. Nothing to migrate.")
 
 
 @config.command("switch")
