@@ -27,6 +27,9 @@
 n8n config add <name> <url> <api_key> -d "<description>"
 ```
 
+API Key は macOS Keychain に保存され、設定ファイル（`.n8n_config.json`）には含まれない。
+既存のプレーンテキストKeyを移行する場合は `n8n config migrate-keys` を実行する。
+
 ## CLI コマンド一覧
 
 ### クライアント管理
@@ -35,9 +38,10 @@ n8n config add <name> <url> <api_key> -d "<description>"
 n8n config list              # 一覧表示
 n8n config active            # アクティブクライアント確認
 n8n config switch <name>     # 切り替え
-n8n config add <name> <url> <api_key> [-d desc]  # 追加
-n8n config remove <name>     # 削除
+n8n config add <name> <url> <api_key> [-d desc]  # 追加（KeyはKeychainに保存）
+n8n config remove <name>     # 削除（Keychainからも削除）
 n8n config test              # 接続テスト
+n8n config migrate-keys      # 既存プレーンテキストKeyをKeychainに移行
 ```
 
 ### ワークフロー (11 endpoints)
@@ -380,7 +384,7 @@ Cloud環境では `GET /credentials` が使えないため:
 
 - `CLAUDE.md` - このファイル（Claude Code用の指示書）
 - `.gitignore` - git管理除外設定
-- `.n8n_config.json` - ローカル認証情報（git管理外、複数クライアント対応）
+- `.n8n_config.json` - ローカル設定（git管理外、API KeyはKeychainに保存）
 - `n8n_client/` - Python パッケージ
   - `client.py` - n8n API クライアント（全59エンドポイント対応）
   - `config.py` - マルチクライアント設定管理
