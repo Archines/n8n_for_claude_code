@@ -1,5 +1,7 @@
 """Multi-client configuration management for n8n API credentials."""
 
+from __future__ import annotations
+
 import json
 import subprocess
 from pathlib import Path
